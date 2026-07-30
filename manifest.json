@@ -1,0 +1,16 @@
+{
+  "name": "내분비학 족보 풀이",
+  "short_name": "내분비족보",
+  "description": "의대 내분비학 족보 풀이 앱 — 일차별·연도별·오답노트·논란 투표",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#131f24",
+  "theme_color": "#131f24",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
