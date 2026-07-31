@@ -41,23 +41,26 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   if (new URL(e.request.url).origin !== location.origin) return;   /* JSONP·외부는 그대로 */
+  /* ⛔ navigation 요청 객체를 그대로 fetch·Cache.put 에 넘기면 안 된다.
+     navigate 모드 Request 는 redirect 가 "manual" 이라 그 응답을 put 하면 브라우저가 거부한다
+     (실측 에러: "Cache.put() encountered a network error", NetworkError).
+     아래 .catch 가 그 에러를 삼켜서 재검증이 매번 조용히 실패했고, 그래서 "새 버전 준비됨"
+     배너를 눌러 reload 해도 캐시엔 옛 문서가 그대로 남아 갱신이 안 됐다.
+     → 캐시 조회·네트워크·저장을 전부 URL 만 담은 평범한 Request(key) 로 통일한다. */
+  const key = new Request(e.request.url);
   e.respondWith(
     caches.open(CACHE).then(async (c) => {
-      const hit = await c.match(e.request);
-      const net = fetch(e.request)
+      const hit = await c.match(key);
+      const net = fetch(key)
         .then(async (r) => {
           if (!r.ok) return r;
           /* 캐시에 다 넣은 뒤에 알린다 — 배너를 눌러 reload 했을 때 새 버전이 나와야 한다 */
           const fresh = hit && isDoc(e.request) && stamp(r) !== stamp(hit);
-          await c.put(e.request, r.clone());
+          await c.put(key, r.clone());
           if (fresh) await notifyClients();
           return r;
         })
-        .catch(async (err) => {
-          const cs = await self.clients.matchAll({ type: "window" });
-          cs.forEach((c) => c.postMessage({ type: "sw-error", where: "revalidate", msg: String(err && err.message || err), name: String(err && err.name) }));
-          return hit;
-        });
+        .catch(() => hit);
       return hit || net;
     })
   );
