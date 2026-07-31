@@ -53,7 +53,11 @@ self.addEventListener("fetch", (e) => {
           if (fresh) await notifyClients();
           return r;
         })
-        .catch(() => hit);
+        .catch(async (err) => {
+          const cs = await self.clients.matchAll({ type: "window" });
+          cs.forEach((c) => c.postMessage({ type: "sw-error", where: "revalidate", msg: String(err && err.message || err), name: String(err && err.name) }));
+          return hit;
+        });
       return hit || net;
     })
   );
